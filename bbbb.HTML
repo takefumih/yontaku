@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>絵画4択クイズ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        h1 {
+            font-size: 36px;
+        }
+        #image-container {
+            margin-top: 20px;
+        }
+        #image-container img {
+            width: 400px;
+            height: auto;
+        }
+        .options {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .options button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>絵画4択クイズ</h1>
+
+    <input type="file" id="imageInput" multiple accept="image/*">
+    <button onclick="startQuiz()">クイズを開始する</button>
+
+    <div id="image-container"></div>
+
+    <div class="options" id="options-container"></div>
+
+    <div class="result" id="result"></div>
+
+    <script>
+        let images = [];
+        let correctAnswer = '';
+        let questionsAsked = 0;
+        let correctCount = 0;
+        let allImages = [];
+
+        // クイズを開始する
+        function startQuiz() {
+            const input = document.getElementById('imageInput');
+            const files = input.files;
+
+            if (files.length < 4) {
+                alert('最低でも4枚の画像を選択してください');
+                return;
+            }
+
+            // 初期化
+            images = [];
+            allImages = [];
+            correctAnswer = '';
+            questionsAsked = 0;
+            correctCount = 0;
+            document.getElementById('result').textContent = '';
+
+            // 選択された画像ファイルを保存
+            for (let i = 0; i < files.length; i++) {
+                const image = {
+                    name: files[i].name,
+                    url: URL.createObjectURL(files[i])
+                };
+                images.push(image);
+                allImages.push(image);
+            }
+
+            // 最初の問題を表示
+            showRandomImage();
+        }
+
+        // ランダムに画像を選んで表示
+        function showRandomImage() {
+            if (images.length === 0) {
+                showResults();  // すべての画像が出題されたら結果を表示
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * images.length);
+            const selectedImage = images[randomIndex];
+
+            // 画像を表示
+            document.getElementById('image-container').innerHTML = `<img src="${selectedImage.url}" alt="${selectedImage.name}">`;
+            correctAnswer = selectedImage.name;
+
+            // 画像リストから削除
+            images.splice(randomIndex, 1);
+
+            // 選択肢を表示
+            setQuizOptions();
+        }
+
+        // 選択肢を設定
+        function setQuizOptions() {
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            // 正解を含む4つの選択肢を作成
+            let allOptions = [correctAnswer];
+            let tempImages = [...allImages];  // 全画像から選択肢を作成
+            tempImages = tempImages.filter(image => image.name !== correctAnswer);
+
+            // 他の選択肢を選ぶ
+            while (allOptions.length < 4 && tempImages.length > 0) {
+                const randomOption = tempImages[Math.floor(Math.random() * tempImages.length)].name;
+                if (!allOptions.includes(randomOption)) {
+                    allOptions.push(randomOption);
+                }
+            }
+
+            // 選択肢が足りなくてもクイズは続行
+            allOptions = allOptions.sort(() => Math.random() - 0.5);
+            allOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.onclick = () => checkAnswer(option);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // 答えをチェックする
+        function checkAnswer(selectedOption) {
+            const result = document.getElementById('result');
+            if (selectedOption === correctAnswer) {
+                correctCount++;
+                result.textContent = '正解です！';
+                result.style.color = 'green';
+            } else {
+                result.textContent = '残念不正解ですよ';
+                result.style.color = 'red';
+            }
+            questionsAsked++;
+
+            // 次の問題を表示
+            setTimeout(() => {
+                result.textContent = '';
+                showRandomImage();
+            }, 1500);
+        }
+
+        // 最終結果を表示する
+        function showResults() {
+            const result = document.getElementById('result');
+            const percentage = (correctCount / questionsAsked) * 100;
+            result.textContent = `クイズ終了！ 正答率は${percentage.toFixed(2)}%です。`;
+        }
+    </script>
+
+</body>
+</html>
